@@ -112,7 +112,8 @@ function settlement(state) {
 
 function reconciliationCard(summary) {
   const result = summary.isBalanced ? '已平' : summary.allSettled ? '账不平' : '待结算';
-  return `<section class="reconciliation-card"><span>累计水上 <strong>${chipValue(summary.totalAbove)}</strong></span><span>累计水下 <strong>${chipValue(summary.totalBelow)}</strong></span><span>核验结果 <strong class="${summary.isBalanced ? 'positive' : summary.allSettled ? 'negative' : 'muted'}">${result}</strong></span>${summary.isBalanced ? '<button class="result-overview-button" type="button" data-open-results>结果总揽</button>' : ''}</section>`;
+  const unbalanced = summary.allSettled && !summary.isBalanced;
+  return `<section class="reconciliation-card ${unbalanced ? 'unbalanced' : ''}">${unbalanced ? '<span class="reconciliation-alert" role="img" aria-label="账不平警告">⚠</span>' : ''}<span>累计水上 <strong>${chipValue(summary.totalAbove)}</strong></span><span>累计水下 <strong>${chipValue(summary.totalBelow)}</strong></span><span>核验结果 <strong class="${summary.isBalanced ? 'positive' : summary.allSettled ? 'negative' : 'muted'}">${result}</strong></span>${summary.isBalanced ? '<button class="result-overview-button" type="button" data-open-results>结果总揽</button>' : ''}</section>`;
 }
 
 function resultsDialog(state) {
