@@ -16,6 +16,7 @@ const app = document.querySelector('#app');
 const labels = { buyIn: '首次带入', topUp: '补充带入', cashOut: '带出 / 还码' };
 const esc = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]);
 const chip = (value) => `${formatNumber(value)} 筹码`;
+const chipValue = (value) => `<span class="chip-value"><span class="chip-value-icon" aria-hidden="true"></span>${formatNumber(value)}</span>`;
 const displayTime = (value) => value ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '—';
 const datetimeValue = (value = new Date().toISOString()) => new Date(value).toISOString().slice(0, 16);
 const money = (chips, rate) => `${(chips / rate).toFixed(2)} 元`;
@@ -110,7 +111,7 @@ function settlement(state) {
 
 function reconciliationCard(summary) {
   const result = summary.isBalanced ? '已平' : summary.allSettled ? '账不平' : '待结算';
-  return `<section class="reconciliation-card"><span>累计水上 <strong>${chip(summary.totalAbove)}</strong></span><span>累计水下 <strong>${chip(summary.totalBelow)}</strong></span><span>核验结果 <strong class="${summary.isBalanced ? 'positive' : summary.allSettled ? 'negative' : 'muted'}">${result}</strong></span>${summary.isBalanced ? '<button class="result-overview-button" type="button" data-open-results>结果总揽</button>' : ''}</section>`;
+  return `<section class="reconciliation-card"><span>累计水上 <strong>${chipValue(summary.totalAbove)}</strong></span><span>累计水下 <strong>${chipValue(summary.totalBelow)}</strong></span><span>核验结果 <strong class="${summary.isBalanced ? 'positive' : summary.allSettled ? 'negative' : 'muted'}">${result}</strong></span>${summary.isBalanced ? '<button class="result-overview-button" type="button" data-open-results>结果总揽</button>' : ''}</section>`;
 }
 
 function resultsDialog(state) {
@@ -120,19 +121,19 @@ function resultsDialog(state) {
 }
 
 function rankingTable(title, rows, rate, tone) {
-  return `<section class="ranking-section"><h3 class="${tone}">${title}</h3><div class="table-wrap"><table class="table"><thead><tr><th>序号</th><th>名称</th><th>结算数额</th></tr></thead><tbody>${rows.map((row, index) => `<tr><td>${index + 1}</td><td>${esc(row.player.name)}</td><td class="${tone}">${row.profitLoss > 0 ? '+' : ''}${chip(row.profitLoss)}${rate ? `<small class="${tone}">（${signedMoney(row.profitLoss, rate)}）</small>` : ''}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">暂无玩家。</td></tr>'}</tbody></table></div></section>`;
+  return `<section class="ranking-section"><h3 class="${tone}">${title}</h3><div class="table-wrap"><table class="table"><thead><tr><th>序号</th><th>名称</th><th>结算数额</th></tr></thead><tbody>${rows.map((row, index) => `<tr><td>${index + 1}</td><td>${esc(row.player.name)}</td><td class="${tone}">${row.profitLoss > 0 ? '+' : ''}${chipValue(row.profitLoss)}${rate ? `<small class="${tone}">（${signedMoney(row.profitLoss, rate)}）</small>` : ''}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">暂无玩家。</td></tr>'}</tbody></table></div></section>`;
 }
 
 function settlementRow(state, player, rate) {
   const summary = playerSummary(player, state.movements);
   const settled = player.remainingChips !== null;
-  return `<form class="settlement-row" data-settlement="${player.id}"><div><strong>${esc(player.name)}</strong><small>净带入 ${chip(summary.netBuyIn)}</small></div><label>剩余筹码<input name="remaining" type="text" inputmode="numeric" required value="${settled ? summary.remainingChips : ''}" placeholder="未填写" /></label><div class="result"><span>盈亏</span><strong class="${summary.profitLoss >= 0 ? 'positive' : 'negative'}">${settled ? `${summary.profitLoss >= 0 ? '+' : ''}${chip(summary.profitLoss)}` : '—'}</strong>${settled && rate ? `<small class="${summary.profitLoss >= 0 ? 'positive' : 'negative'}">${signedMoney(summary.profitLoss, rate)}</small>` : ''}</div><button class="button" type="submit">保存</button></form>`;
+  return `<div class="settlement-row" data-settlement="${player.id}"><div><strong>${esc(player.name)}</strong><small>净带入 ${chipValue(summary.netBuyIn)}</small></div><label>剩余筹码<input name="remaining" type="text" inputmode="numeric" value="${settled ? summary.remainingChips : ''}" placeholder="未填写" /></label><div class="result"><span>盈亏</span><strong class="${summary.profitLoss >= 0 ? 'positive' : 'negative'}">${settled ? `${summary.profitLoss >= 0 ? '+' : ''}${chipValue(summary.profitLoss)}` : '—'}</strong>${settled && rate ? `<small class="${summary.profitLoss >= 0 ? 'positive' : 'negative'}">${signedMoney(summary.profitLoss, rate)}</small>` : ''}</div></div>`;
 }
 
 function ledger(state) {
   const movements = state.movements.slice().sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
   const editing = movements.find((item) => item.id === editingMovementId);
-  return `<section class="flow-page"><div class="flow-heading"><div><p class="eyebrow">回查与修正</p><h2>账本与操作记录</h2><p class="muted">日常记账在“进行中”，这里用于核对和修改历史数据；每次修改会保留在备注记录中。</p></div></div>${editing ? editForm(state, editing) : ''}<section class="table-panel"><h3>全部流水</h3><div class="table-wrap"><table class="table ledger-table"><thead><tr><th>发生时间</th><th>玩家</th><th>动作</th><th>数量</th><th>操作</th><th>备注</th></tr></thead><tbody>${movements.map((item) => `<tr><td>${displayTime(item.occurredAt)}</td><td>${esc(playerName(state, item.playerId))}</td><td>${labels[item.type]}</td><td>${chip(item.amount)}</td><td><button class="edit-record-button" data-edit-movement="${item.id}">修改</button></td><td class="movement-notes">${htmlWithBreaks(movementNotes(item)) || '—'}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">暂无流水。</td></tr>'}</tbody></table></div></section></section>`;
+  return `<section class="flow-page"><div class="flow-heading"><div><p class="eyebrow">回查与修正</p><h2>账本与操作记录</h2><p class="muted">日常记账在“进行中”，这里用于核对和修改历史数据；每次修改会保留在备注记录中。</p></div></div>${editing ? editForm(state, editing) : ''}<section class="table-panel"><h3>全部流水</h3><div class="table-wrap"><table class="table ledger-table"><thead><tr><th>发生时间</th><th>玩家</th><th>动作</th><th>数量</th><th>操作</th><th>备注</th></tr></thead><tbody>${movements.map((item) => `<tr><td>${displayTime(item.occurredAt)}</td><td>${esc(playerName(state, item.playerId))}</td><td>${labels[item.type]}</td><td>${chipValue(item.amount)}</td><td><button class="edit-record-button" data-edit-movement="${item.id}">修改</button></td><td class="movement-notes">${htmlWithBreaks(movementNotes(item)) || '—'}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">暂无流水。</td></tr>'}</tbody></table></div></section></section>`;
 }
 
 function editForm(state, movement) {
@@ -169,10 +170,14 @@ function bindEvents() {
   document.querySelector('#movement-form')?.addEventListener('submit', (event) => run(event, () => { const data = Object.fromEntries(new FormData(event.currentTarget)); store.addMovement({ ...data, amount: Number(data.amount), occurredAt: new Date(data.occurredAt).toISOString() }); }));
   document.querySelector('#conversion-form')?.addEventListener('submit', (event) => run(event, () => { const data = Object.fromEntries(new FormData(event.currentTarget)); store.setConversion(Number(data.chips), Number(data.amount)); }));
   document.querySelector('[data-clear-rate]')?.addEventListener('click', () => run(null, () => store.setConversionRate('')));
-  document.querySelectorAll('[data-settlement]').forEach((form) => {
-    form.addEventListener('submit', (event) => run(event, () => {
-      store.setRemaining(form.dataset.settlement, Number(new FormData(form).get('remaining')));
-    }));
+  document.querySelectorAll('[data-settlement] input[name="remaining"]').forEach((input) => {
+    input.addEventListener('blur', () => {
+      if (!input.value.trim()) return;
+      run(null, () => store.setRemaining(input.closest('[data-settlement]').dataset.settlement, Number(input.value)));
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); input.blur(); }
+    });
   });
   document.querySelectorAll('[data-edit-movement]').forEach((button) => button.addEventListener('click', () => { editingMovementId = button.dataset.editMovement; message = ''; render(); }));
   document.querySelector('[data-cancel-edit]')?.addEventListener('click', () => { editingMovementId = null; message = ''; render(); });
