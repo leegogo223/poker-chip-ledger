@@ -37,7 +37,7 @@ h1 { margin-bottom: 0; font-size: 1.5rem; }
 .player small { display: block; color: #547061; margin-top: 4px; }
 .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
 .card { padding: 14px; } .card span { display: block; color: #547061; font-size: .85rem; } .card strong { display: block; margin-top: 6px; font-size: 1.18rem; }
-.positive { color: #087443; } .negative { color: #b42318; }.chip-value { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }.chip-value-icon { display: inline-block; width: 13px; height: 13px; border: 3px dotted currentColor; border-radius: 50%; background: #eef5ee; box-shadow: inset 0 0 0 2px white; }
+.positive { color: #087443; } .negative { color: #b42318; }
 form { display: grid; gap: 10px; } .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 label { display: grid; gap: 5px; color: #466454; font-size: .88rem; }
 input, select, textarea { border: 1px solid #bdd0c0; border-radius: 8px; padding: 10px; background: white; color: inherit; }

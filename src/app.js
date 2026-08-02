@@ -16,7 +16,7 @@ const app = document.querySelector('#app');
 const labels = { buyIn: '首次带入', topUp: '补充带入', cashOut: '带出 / 还码' };
 const esc = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]);
 const chip = (value) => `${formatNumber(value)} 筹码`;
-const chipValue = (value) => `<span class="chip-value"><span class="chip-value-icon" aria-hidden="true"></span>${formatNumber(value)}</span>`;
+const chipValue = (value) => formatNumber(value);
 const displayTime = (value) => value ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '—';
 const datetimeValue = (value = new Date().toISOString()) => new Date(value).toISOString().slice(0, 16);
 const money = (chips, rate) => `${(chips / rate).toFixed(2)} 元`;
