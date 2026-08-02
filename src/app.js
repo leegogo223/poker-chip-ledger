@@ -129,7 +129,7 @@ function rankingTable(title, rows, rate, tone) {
 function settlementRow(state, player, rate) {
   const summary = playerSummary(player, state.movements);
   const settled = player.remainingChips !== null;
-  return `<div class="settlement-row" data-settlement="${player.id}"><div><strong>${esc(player.name)}</strong><small>净带入 ${chipValue(summary.netBuyIn)}</small></div><label>剩余筹码<input name="remaining" type="text" inputmode="numeric" value="${settled ? summary.remainingChips : ''}" placeholder="未填写" /></label><div class="result"><span>盈亏</span><strong class="${summary.profitLoss >= 0 ? 'positive' : 'negative'}">${settled ? `${summary.profitLoss >= 0 ? '+' : ''}${chipValue(summary.profitLoss)}` : '—'}</strong>${settled && rate ? `<small class="${summary.profitLoss >= 0 ? 'positive' : 'negative'}">${signedMoney(summary.profitLoss, rate)}</small>` : ''}</div></div>`;
+  return `<div class="settlement-row" data-settlement="${player.id}"><strong class="settlement-name">${esc(player.name)}</strong><div class="settlement-cell"><span>净带入</span><strong>${chipValue(summary.netBuyIn)}</strong></div><label class="settlement-cell">剩余筹码<input name="remaining" type="text" inputmode="numeric" value="${settled ? summary.remainingChips : ''}" placeholder="未填写" /></label><div class="result settlement-cell"><span>盈亏</span><strong class="${summary.profitLoss >= 0 ? 'positive' : 'negative'}">${settled ? `${summary.profitLoss >= 0 ? '+' : ''}${chipValue(summary.profitLoss)}` : '—'}</strong>${settled && rate ? `<small class="${summary.profitLoss >= 0 ? 'positive' : 'negative'}">${signedMoney(summary.profitLoss, rate)}</small>` : ''}</div></div>`;
 }
 
 function ledger(state) {
