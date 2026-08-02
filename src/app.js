@@ -139,7 +139,7 @@ function ledger(state) {
 }
 
 function editForm(state, movement) {
-  return `<section class="edit-panel"><div class="section-header"><h3>修改流水</h3><button class="text-button" data-cancel-edit>取消</button></div><form id="edit-movement" class="compact-form"><label>类型<select name="type">${Object.entries(labels).map(([value, label]) => `<option value="${value}" ${movement.type === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label>数量<input name="amount" type="number" min="1" step="1" value="${movement.amount}" required /></label><label>发生时间<input name="occurredAt" type="datetime-local" value="${datetimeValue(movement.occurredAt)}" required /></label><button class="button" type="submit">保存修改</button><p class="error">${esc(message)}</p></form></section>`;
+  return `<section class="edit-panel"><div class="section-header"><h3>修改流水</h3><button class="text-button" data-cancel-edit>取消</button></div><form id="edit-movement" class="compact-form"><label>类型<select name="type">${Object.entries(labels).map(([value, label]) => `<option value="${value}" ${movement.type === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label>数量<input name="amount" type="number" min="1" step="1" value="${movement.amount}" required /></label><button class="button" type="submit">保存修改</button><p class="error">${esc(message)}</p></form></section>`;
 }
 
 function audit(state) { return `<details class="audit"><summary>查看管理审计记录（${state.audit.length}）</summary>${state.audit.slice().reverse().map((item) => `<article class="audit-item"><strong>${item.action === 'create' ? '新增' : item.action === 'update' ? '修改' : '删除'} ${item.targetType}</strong> · ${displayTime(item.at)}<details><summary>查看前后数据</summary><pre>操作前：${esc(JSON.stringify(item.before, null, 2))}\n操作后：${esc(JSON.stringify(item.after, null, 2))}</pre></details></article>`).join('') || '<p class="muted">尚无操作。</p>'}</details>`; }
@@ -183,7 +183,7 @@ function bindEvents() {
   });
   document.querySelectorAll('[data-edit-movement]').forEach((button) => button.addEventListener('click', () => { editingMovementId = button.dataset.editMovement; message = ''; render(); }));
   document.querySelector('[data-cancel-edit]')?.addEventListener('click', () => { editingMovementId = null; message = ''; render(); });
-  document.querySelector('#edit-movement')?.addEventListener('submit', (event) => run(event, () => { const data = Object.fromEntries(new FormData(event.currentTarget)); store.updateMovement(editingMovementId, { ...data, amount: Number(data.amount), occurredAt: new Date(data.occurredAt).toISOString() }); editingMovementId = null; }));
+  document.querySelector('#edit-movement')?.addEventListener('submit', (event) => run(event, () => { const data = Object.fromEntries(new FormData(event.currentTarget)); store.updateMovement(editingMovementId, { ...data, amount: Number(data.amount) }); editingMovementId = null; }));
   document.querySelector('[data-copy-summary]')?.addEventListener('click', () => copySummary(store.load()));
   document.querySelector('[data-clear-records]')?.addEventListener('click', () => clearAllRecords());
 }

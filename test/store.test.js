@@ -86,11 +86,13 @@ test('stores a chip-to-cash conversion pair and derives its rate', () => {
 test('editing retains exact before and after snapshots', () => {
   const store = createStore(new MapStorage());
   const player = store.addPlayer('阿明');
-  const movement = store.addMovement({ playerId: player.id, type: 'buyIn', amount: 500 });
-  store.updateMovement(movement.id, { type: 'topUp', amount: 300, occurredAt: '2026-08-01T10:00:00.000Z' }, '2026-08-01T11:00:00.000Z');
+  const occurredAt = '2026-08-01T10:00:00.000Z';
+  const movement = store.addMovement({ playerId: player.id, type: 'buyIn', amount: 500, occurredAt });
+  store.updateMovement(movement.id, { type: 'topUp', amount: 300, occurredAt: '2030-01-01T00:00:00.000Z' }, '2026-08-01T11:00:00.000Z');
   const audit = store.load().audit.at(-1);
   assert.equal(audit.before.amount, 500);
   assert.equal(audit.after.amount, 300);
+  assert.equal(audit.after.occurredAt, occurredAt);
   assert.equal(audit.at, '2026-08-01T11:00:00.000Z');
 });
 
@@ -98,7 +100,7 @@ test('editing a movement preserves a timestamped change note', () => {
   const store = createStore(new MapStorage());
   const player = store.addPlayer('阿明');
   const movement = store.addMovement({ playerId: player.id, type: 'buyIn', amount: 500 });
-  store.updateMovement(movement.id, { type: 'buyIn', amount: 800, occurredAt: movement.occurredAt }, '2026-08-01T12:00:00.000Z');
+  store.updateMovement(movement.id, { type: 'buyIn', amount: 800 }, '2026-08-01T12:00:00.000Z');
   const updated = store.load().movements[0];
   assert.deepEqual(updated.editHistory, [{ at: '2026-08-01T12:00:00.000Z', changes: ['数量：500 → 800'] }]);
 });

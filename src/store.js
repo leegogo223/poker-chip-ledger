@@ -91,7 +91,7 @@ export function createStore(storage = localStorage) {
         return clone(movement);
       });
     },
-    updateMovement(id, { type, amount, occurredAt }, actionAt = now()) {
+    updateMovement(id, { type, amount }, actionAt = now()) {
       return transact((state) => {
         const movement = state.movements.find((item) => item.id === id);
         if (!movement) throw new Error('找不到该记录');
@@ -102,9 +102,8 @@ export function createStore(storage = localStorage) {
         const changes = [];
         if (before.type !== type) changes.push(`类型：${typeLabel[before.type]} → ${typeLabel[type]}`);
         if (before.amount !== amount) changes.push(`数量：${before.amount} → ${amount}`);
-        if (before.occurredAt !== occurredAt) changes.push('发生时间已修改');
         const editHistory = [...(movement.editHistory ?? []), { at: actionAt, changes: changes.length ? changes : ['重新保存'] }];
-        Object.assign(movement, { type, amount, occurredAt, editHistory, updatedAt: actionAt });
+        Object.assign(movement, { type, amount, editHistory, updatedAt: actionAt });
         addAudit(state, 'update', 'movement', id, before, movement, actionAt);
         return clone(movement);
       });
