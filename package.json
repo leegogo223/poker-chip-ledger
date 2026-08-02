@@ -1,0 +1,8 @@
+{
+  "name": "poker-chip-ledger",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
