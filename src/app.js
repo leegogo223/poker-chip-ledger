@@ -57,7 +57,7 @@ function render() {
 
 function live(state) {
   const recent = state.movements.slice().sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 12);
-  return `<section class="flow-page"><div class="flow-heading"><div><p class="eyebrow">进行中</p><h2>筹码记录</h2><p class="muted">玩家、带入总量与补码 / 退码都在同一张表中。</p></div></div><section class="players-card"><div class="section-header"><h3>玩家 <span class="player-count">${state.players.length} 人</span></h3><div class="players-tools"><button class="copy-summary-button" type="button" data-copy-summary>${copyStatus || '一键复制'}</button></div></div>${playersTable(state)}${showNewPlayer ? newPlayerEntry() : movementModal ? quickMovementEntry(state) : ''}<p class="error">${esc(message)}</p></section>${state.players.length ? `<section class="timeline"><div class="section-header"><div><p class="eyebrow">最近动作</p><h3>全局时间线</h3></div><button class="text-button" data-screen="ledger">查看全部记录 →</button></div>${recent.length ? recent.map((movement) => timelineItem(state, movement)).join('') : '<p class="muted">还没有筹码流水。</p>'}</section>` : '<section class="empty"><h3>先在上方新增玩家</h3><p class="muted">添加后即可记录首次带入、补码或退码。</p></section>'}</section>`;
+  return `<section class="flow-page"><div class="flow-heading"><div><p class="eyebrow">进行中</p><h2>筹码记录</h2><p class="muted">玩家、带入总量与补码 / 退码都在同一张表中。</p></div></div><section class="players-card"><div class="section-header"><h3>玩家 <span class="player-count">${state.players.length} 人</span></h3><div class="players-tools"><button class="copy-summary-button" type="button" data-copy-summary>${copyStatus || '一键复制'}</button></div></div>${playersTable(state)}${showNewPlayer ? newPlayerEntry() : ''}<p class="error">${esc(message)}</p></section>${state.players.length ? `<section class="timeline"><div class="section-header"><div><p class="eyebrow">最近动作</p><h3>全局时间线</h3></div><button class="text-button" data-screen="ledger">查看全部记录 →</button></div>${recent.length ? recent.map((movement) => timelineItem(state, movement)).join('') : '<p class="muted">还没有筹码流水。</p>'}</section>` : '<section class="empty"><h3>先在上方新增玩家</h3><p class="muted">添加后即可记录首次带入、补码或退码。</p></section>'}</section>`;
 }
 
 function movementForm(state) {
@@ -65,7 +65,7 @@ function movementForm(state) {
 }
 
 function playersTable(state) {
-  return `<div class="table-wrap"><table class="table players-table"><thead><tr><th>序号</th><th>玩家名称</th><th>操作选项</th><th>带入总量</th><th>补码次数</th></tr></thead><tbody>${state.players.map((player, index) => playerRow(state, player, index)).join('')}${showNewPlayer ? '' : '<tr class="add-player-row"><td colspan="5"><button class="action-tab add-player-tab" type="button" data-open-player>＋ 新增玩家</button></td></tr>'}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="table players-table"><thead><tr><th>序号</th><th>玩家名称</th><th>操作选项</th><th>带入总量</th><th>补码次数</th></tr></thead><tbody>${state.players.map((player, index) => movementModal?.playerId === player.id ? quickMovementRow(state, player, index) : playerRow(state, player, index)).join('')}${showNewPlayer ? '' : '<tr class="add-player-row"><td colspan="5"><button class="action-tab add-player-tab" type="button" data-open-player>＋ 新增玩家</button></td></tr>'}</tbody></table></div>`;
 }
 
 function newPlayerEntry() {
@@ -77,11 +77,9 @@ function playerRow(state, player, index) {
   return `<tr><td>${index + 1}</td><td><strong class="player-name" title="${esc(player.name)}">${esc(player.name)}</strong></td><td><button class="action-tab top-up-tab" data-quick="${player.id}:topUp">补码</button><button class="action-tab cash-out-tab" data-quick="${player.id}:cashOut">退码</button></td><td><button class="record-total-link" data-view-records="${player.id}">${formatNumber(summary.netBuyIn)}</button></td><td>${summary.topUpCount} 次</td></tr>`;
 }
 
-function quickMovementEntry(state) {
-  const player = state.players.find((item) => item.id === movementModal.playerId);
-  if (!player) return '';
+function quickMovementRow(state, player, index) {
   const label = movementModal.type === 'topUp' ? '补码' : '退码';
-  return `<form id="quick-movement" class="new-player-entry quick-movement-entry"><div class="quick-movement-info"><strong>${esc(player.name)} · ${label}</strong><small>填写本次筹码数量</small></div><label>筹码数量<input name="amount" type="number" min="1" step="1" inputmode="numeric" required autofocus placeholder="请输入数量" /></label><button class="button" type="submit">保存${label}</button><button class="cancel-player-button" type="button" data-close-quick>取消</button></form>`;
+  return `<tr class="quick-movement-row"><td colspan="5"><form id="quick-movement" class="quick-movement-entry"><div class="quick-movement-info"><strong>${index + 1} · ${esc(player.name)} · ${label}</strong><small>填写本次筹码数量</small></div><label>筹码数量<input name="amount" type="number" min="1" step="1" inputmode="numeric" required autofocus placeholder="请输入数量" /></label><button class="button" type="submit">保存${label}</button><button class="cancel-player-button" type="button" data-close-quick>取消</button></form></td></tr>`;
 }
 
 function recordsDialog(state) {
