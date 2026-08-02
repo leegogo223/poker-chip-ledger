@@ -43,9 +43,11 @@ function loadSevenPlayerDemo() {
 }
 
 if (new URLSearchParams(window.location.search).get('demo') === '7') {
-  loadSevenPlayerDemo();
+  if (window.confirm('载入 7 人演示数据会覆盖当前设备上的全部记录，是否继续？')) {
+    loadSevenPlayerDemo();
+    screen = 'settle';
+  }
   window.history.replaceState({}, '', window.location.pathname);
-  screen = 'settle';
 }
 
 function render() {
@@ -79,7 +81,8 @@ function playerRow(state, player, index) {
 
 function quickMovementRow(state, player, index) {
   const label = movementModal.type === 'topUp' ? '补码' : '退码';
-  return `<tr class="quick-movement-row"><td colspan="5"><form id="quick-movement" class="quick-movement-entry"><div class="quick-movement-info"><strong>${index + 1} · ${esc(player.name)} · ${label}</strong><small>填写本次筹码数量</small></div><label>筹码数量<input name="amount" type="number" min="1" step="1" inputmode="numeric" required autofocus placeholder="请输入数量" /></label><button class="button" type="submit">保存${label}</button><button class="cancel-player-button" type="button" data-close-quick>取消</button></form></td></tr>`;
+  const theme = movementModal.type === 'topUp' ? 'top-up-entry' : 'cash-out-entry';
+  return `<tr class="quick-movement-row"><td colspan="5"><form id="quick-movement" class="quick-movement-entry ${theme}"><div class="quick-movement-info"><strong>${index + 1} · ${esc(player.name)} · ${label}</strong><small>填写本次筹码数量</small></div><label>筹码数量<input name="amount" type="number" min="1" step="1" inputmode="numeric" required autofocus placeholder="请输入数量" /></label><button class="button quick-save-button" type="submit">保存${label}</button><button class="cancel-player-button" type="button" data-close-quick>取消</button></form></td></tr>`;
 }
 
 function recordsDialog(state) {
@@ -104,7 +107,7 @@ function settlement(state) {
   const reconciliation = reconciliationSummary(state);
   const conversionChips = state.conversionChips ?? rate ?? '';
   const conversionAmount = state.conversionAmount ?? (rate ? 1 : '');
-  return `<section class="flow-page"><div class="flow-heading"><div><p class="eyebrow">牌局结束</p><h2>依次录入每位玩家的剩余筹码</h2><p class="muted">填完一行就保存一行；系统会立即计算盈亏。金额换算为可选设置。</p></div></div><div class="settlement-top-row"><section class="conversion-section"><h3>换算比例</h3><div class="conversion-panel"><form id="conversion-form" class="conversion-form"><label>筹码<input name="chips" type="text" inputmode="decimal" value="${conversionChips}" placeholder="筹码数" /></label><strong class="conversion-equals">=</strong><label>金额<input name="amount" type="text" inputmode="decimal" value="${conversionAmount}" placeholder="金额数" /></label><button class="clear-rate-button" type="button" data-clear-rate>清除</button><button class="button" type="submit">保存</button></form></div></section>${reconciliationCard(reconciliation)}</div><div class="settlement-list">${state.players.map((player) => settlementRow(state, player, rate)).join('')}</div></section>`;
+  return `<section class="flow-page"><div class="flow-heading"><div><p class="eyebrow">牌局结束</p><h2>依次录入每位玩家的剩余筹码</h2><p class="muted">填完一行就保存一行；系统会立即计算盈亏。金额换算为可选设置。</p></div></div>${message ? `<p class="error settlement-error">${esc(message)}</p>` : ''}<div class="settlement-top-row"><section class="conversion-section"><h3>换算比例</h3><div class="conversion-panel"><form id="conversion-form" class="conversion-form"><label>筹码<input name="chips" type="text" inputmode="decimal" value="${conversionChips}" placeholder="筹码数" /></label><strong class="conversion-equals">=</strong><label>金额<input name="amount" type="text" inputmode="decimal" value="${conversionAmount}" placeholder="金额数" /></label><button class="clear-rate-button" type="button" data-clear-rate>清除</button><button class="button" type="submit">保存</button></form></div></section>${reconciliationCard(reconciliation)}</div><div class="settlement-list">${state.players.map((player) => settlementRow(state, player, rate)).join('')}</div></section>`;
 }
 
 function reconciliationCard(summary) {
