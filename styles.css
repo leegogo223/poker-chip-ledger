@@ -4,7 +4,7 @@ body { margin: 0; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 .app { max-width: 1400px; margin: 0 auto; padding: 20px; }
-.topbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; background: #0d392c; color: white; padding: 22px; border-radius: 18px; }
+.topbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; background: #0d392c; color: white; padding: 22px; border-radius: 18px; }.topbar-actions { display: flex; align-items: center; gap: 16px; }.clear-records-button { border: 1px solid rgb(255 255 255 / .5); border-radius: 7px; padding: 7px 10px; background: #8a2b24; color: white; font: inherit; font-size: .8rem; font-weight: 650; }
 .eyebrow { margin: 0 0 4px; color: #aad6b2; font-size: .78rem; letter-spacing: .08em; }
 h1, h2, h3, p { margin-top: 0; }
 h1 { margin-bottom: 0; font-size: 1.5rem; }
@@ -60,4 +60,4 @@ textarea { resize: vertical; min-height: 62px; }
 @media (max-width: 759px) { .new-player-entry { grid-template-columns: 1fr 1fr; width: calc(100% - 6%); max-width: none; }.new-player-entry .button, .cancel-player-button { width: 100%; } }
 .error { color: #b42318; min-height: 1.25rem; margin: 0; font-size: .88rem; }.muted { color: #547061; }.empty { padding: 42px 24px; text-align: center; }.audit { margin-top: 12px; }.audit summary { cursor: pointer; color: #145235; font-weight: 650; }.audit-item { padding: 12px 0; border-bottom: 1px solid #e7eee8; font-size: .88rem; }.audit-item pre { white-space: pre-wrap; background: #f4f6f3; padding: 8px; border-radius: 6px; color: #466454; }
 @media (min-width: 760px) { .layout { grid-template-columns: 270px minmax(0, 1fr); }.card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }.form-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-@media (max-width: 560px) { .settlement-top-row { display: grid; }.conversion-form { flex-wrap: wrap; }.conversion-form label { flex: 1; min-width: 0; }.conversion-form .button { margin-left: auto; }.reconciliation-card { min-width: 0; } }
+@media (max-width: 560px) { .topbar { align-items: flex-start; }.topbar-actions { flex-direction: column-reverse; align-items: flex-end; gap: 8px; }.clear-records-button { padding: 6px 9px; }.modal-backdrop { place-items: end center; padding: 12px; }.modal { width: 100%; max-height: calc(100dvh - 24px); padding: 20px; border-radius: 16px 16px 12px 12px; overflow-y: auto; }.modal #quick-movement { gap: 14px; }.modal #quick-movement input { min-height: 52px; font-size: 1.12rem; }.modal .primary-action { min-height: 52px; font-size: 1rem; }.settlement-top-row { display: grid; }.conversion-form { flex-wrap: wrap; }.conversion-form label { flex: 1; min-width: 0; }.conversion-form .button { margin-left: auto; }.reconciliation-card { min-width: 0; } }

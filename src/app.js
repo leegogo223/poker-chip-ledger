@@ -50,7 +50,7 @@ if (new URLSearchParams(window.location.search).get('demo') === '7') {
 function render() {
   const state = store.load();
   const global = globalNetBuyIn(state);
-  app.innerHTML = `<main class="app"><header class="topbar"><div><p class="eyebrow">单一管理员 · 数据仅保存在本机</p><h1>筹码记录</h1></div><div class="total"><p class="eyebrow">全局净带入</p><strong>${chip(global)}</strong></div></header><nav class="flow-nav"><button data-screen="live" class="${screen === 'live' ? 'active' : ''}"><span>1</span>筹码记录</button><button data-screen="settle" class="${screen === 'settle' ? 'active' : ''}"><span>2</span>结算</button><button data-screen="ledger" class="${screen === 'ledger' ? 'active' : ''}"><span>3</span>账本与记录</button></nav><section class="workspace">${screen === 'live' ? live(state) : screen === 'settle' ? settlement(state) : ledger(state)}</section></main>${movementModal ? movementDialog(state) : ''}${recordsModalPlayerId ? recordsDialog(state) : ''}${showResultsModal ? resultsDialog(state) : ''}`;
+  app.innerHTML = `<main class="app"><header class="topbar"><div><p class="eyebrow">单一管理员 · 数据仅保存在本机</p><h1>筹码记录</h1></div><div class="topbar-actions"><button class="clear-records-button" type="button" data-clear-records>清空记录</button><div class="total"><p class="eyebrow">全局净带入</p><strong>${chip(global)}</strong></div></div></header><nav class="flow-nav"><button data-screen="live" class="${screen === 'live' ? 'active' : ''}"><span>1</span>筹码记录</button><button data-screen="settle" class="${screen === 'settle' ? 'active' : ''}"><span>2</span>结算</button><button data-screen="ledger" class="${screen === 'ledger' ? 'active' : ''}"><span>3</span>账本与记录</button></nav><section class="workspace">${screen === 'live' ? live(state) : screen === 'settle' ? settlement(state) : ledger(state)}</section></main>${movementModal ? movementDialog(state) : ''}${recordsModalPlayerId ? recordsDialog(state) : ''}${showResultsModal ? resultsDialog(state) : ''}`;
   bindEvents();
 }
 
@@ -178,31 +178,30 @@ function bindEvents() {
   document.querySelector('[data-cancel-edit]')?.addEventListener('click', () => { editingMovementId = null; message = ''; render(); });
   document.querySelector('#edit-movement')?.addEventListener('submit', (event) => run(event, () => { const data = Object.fromEntries(new FormData(event.currentTarget)); store.updateMovement(editingMovementId, { ...data, amount: Number(data.amount), occurredAt: new Date(data.occurredAt).toISOString() }); editingMovementId = null; }));
   document.querySelector('[data-copy-summary]')?.addEventListener('click', () => copySummary(store.load()));
+  document.querySelector('[data-clear-records]')?.addEventListener('click', () => clearAllRecords());
 }
 function run(event, action) { event?.preventDefault(); try { message = ''; action(); } catch (error) { message = error.message; } render(); }
-function summaryText(state, at = new Date()) {
+function summaryText(state, at = new Date(), includeSettlement = false) {
   const rows = state.players.map((player) => {
     const summary = playerSummary(player, state.movements);
     return `${player.name}｜${formatNumber(summary.netBuyIn)}｜${summary.topUpCount}`;
   });
-  return ['当前带入情况：', `截止统计时间：${copyTime(at)}`, '玩家名称｜带入总量｜补码次数', ...rows].join('\n');
+  const result = ['当前带入情况：', `截止统计时间：${copyTime(at)}`, '玩家名称｜带入总量｜补码次数', ...rows];
+  const settledPlayers = state.players.filter((player) => player.remainingChips !== null);
+  if (includeSettlement && settledPlayers.length) {
+    const rate = state.conversionRate;
+    result.push('', '结算情况：', `玩家名称｜剩余筹码｜盈亏筹码${rate ? '｜盈亏金额' : ''}`);
+    settledPlayers.forEach((player) => {
+      const summary = playerSummary(player, state.movements);
+      const profit = `${summary.profitLoss >= 0 ? '+' : ''}${formatNumber(summary.profitLoss)}`;
+      result.push(`${player.name}｜${formatNumber(player.remainingChips)}｜${profit}${rate ? `｜${signedMoney(summary.profitLoss, rate)}` : ''}`);
+    });
+  }
+  return result.join('\n');
 }
 async function copySummary(state) {
-  const text = summaryText(state);
   try {
-    if (navigator.clipboard?.writeText && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-    } else {
-      const field = document.createElement('textarea');
-      field.value = text;
-      field.setAttribute('readonly', '');
-      field.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
-      document.body.append(field);
-      field.select();
-      const copied = document.execCommand('copy');
-      field.remove();
-      if (!copied) throw new Error('复制失败');
-    }
+    await copyText(summaryText(state));
     copyStatus = '已复制';
     message = '';
   } catch {
@@ -211,6 +210,40 @@ async function copySummary(state) {
   }
   render();
   if (copyStatus) window.setTimeout(() => { copyStatus = ''; render(); }, 1600);
+}
+async function copyText(text) {
+  if (navigator.clipboard?.writeText && window.isSecureContext) return navigator.clipboard.writeText(text);
+  const field = document.createElement('textarea');
+  field.value = text;
+  field.setAttribute('readonly', '');
+  field.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+  document.body.append(field);
+  field.select();
+  const copied = document.execCommand('copy');
+  field.remove();
+  if (!copied) throw new Error('复制失败');
+}
+async function clearAllRecords() {
+  const state = store.load();
+  if (!window.confirm('将先复制当前记录，然后清空本机全部数据。是否继续？')) return;
+  if (!window.confirm('再次确认：清空后无法恢复当前记录，是否确定清空？')) return;
+  let copied = true;
+  try {
+    await copyText(summaryText(state, new Date(), true));
+  } catch {
+    copied = false;
+  }
+  store.save(emptyState());
+  screen = 'live';
+  showNewPlayer = false;
+  editingMovementId = null;
+  movementModal = null;
+  recordsModalPlayerId = null;
+  showResultsModal = false;
+  copyStatus = '';
+  message = '';
+  render();
+  window.alert(copied ? '记录已清空，清空前的数据已复制到剪贴板。' : '记录已清空，但浏览器未能复制数据。');
 }
 function closeNewPlayer() {
   showNewPlayer = false;
