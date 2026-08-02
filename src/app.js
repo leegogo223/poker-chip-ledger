@@ -12,6 +12,7 @@ let showAboveResults = true;
 let showBelowResults = true;
 let message = '';
 let copyStatus = '';
+let settlementCopyStatus = '';
 const app = document.querySelector('#app');
 const labels = { buyIn: '首次带入', topUp: '补充带入', cashOut: '带出 / 还码' };
 const esc = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]);
@@ -107,7 +108,7 @@ function settlement(state) {
   const reconciliation = reconciliationSummary(state);
   const conversionChips = state.conversionChips ?? rate ?? '';
   const conversionAmount = state.conversionAmount ?? (rate ? 1 : '');
-  return `<section class="flow-page"><div class="flow-heading"><h2>录入剩余筹码</h2></div>${message ? `<p class="error settlement-error">${esc(message)}</p>` : ''}<div class="settlement-top-row"><section class="conversion-section"><h3>换算比例</h3><div class="conversion-panel"><form id="conversion-form" class="conversion-form"><label>筹码<input name="chips" type="text" inputmode="decimal" value="${conversionChips}" placeholder="筹码数" /></label><strong class="conversion-equals">=</strong><label>金额<input name="amount" type="text" inputmode="decimal" value="${conversionAmount}" placeholder="金额数" /></label><button class="clear-rate-button" type="button" data-clear-rate>清除</button><button class="button" type="submit">保存</button></form></div></section>${reconciliationCard(reconciliation)}</div><div class="settlement-list"><div class="settlement-header"><span>名称｜净带入</span><span>剩余筹码｜盈亏</span></div>${state.players.map((player) => settlementRow(state, player, rate)).join('')}</div></section>`;
+  return `<section class="flow-page"><div class="flow-heading"><h2>录入剩余筹码</h2><button class="copy-summary-button" type="button" data-copy-settlement>${settlementCopyStatus || '一键复制'}</button></div>${message ? `<p class="error settlement-error">${esc(message)}</p>` : ''}<div class="settlement-top-row"><section class="conversion-section"><h3>换算比例</h3><div class="conversion-panel"><form id="conversion-form" class="conversion-form"><label>筹码<input name="chips" type="text" inputmode="decimal" value="${conversionChips}" placeholder="筹码数" /></label><strong class="conversion-equals">=</strong><label>金额<input name="amount" type="text" inputmode="decimal" value="${conversionAmount}" placeholder="金额数" /></label><button class="clear-rate-button" type="button" data-clear-rate>清除</button><button class="button" type="submit">保存</button></form></div></section>${reconciliationCard(reconciliation)}</div><div class="settlement-list"><div class="settlement-header"><span>名称｜净带入</span><span>剩余筹码｜盈亏</span></div>${state.players.map((player) => settlementRow(state, player, rate)).join('')}</div></section>`;
 }
 
 function reconciliationCard(summary) {
@@ -185,6 +186,7 @@ function bindEvents() {
   document.querySelector('[data-cancel-edit]')?.addEventListener('click', () => { editingMovementId = null; message = ''; render(); });
   document.querySelector('#edit-movement')?.addEventListener('submit', (event) => run(event, () => { const data = Object.fromEntries(new FormData(event.currentTarget)); store.updateMovement(editingMovementId, { ...data, amount: Number(data.amount) }); editingMovementId = null; }));
   document.querySelector('[data-copy-summary]')?.addEventListener('click', () => copySummary(store.load()));
+  document.querySelector('[data-copy-settlement]')?.addEventListener('click', () => copySettlement(store.load()));
   document.querySelector('[data-clear-records]')?.addEventListener('click', () => clearAllRecords());
 }
 function run(event, action) { event?.preventDefault(); try { message = ''; action(); } catch (error) { message = error.message; } render(); }
@@ -217,6 +219,29 @@ async function copySummary(state) {
   }
   render();
   if (copyStatus) window.setTimeout(() => { copyStatus = ''; render(); }, 1600);
+}
+function settlementText(state, at = new Date()) {
+  const rate = state.conversionRate;
+  const rows = state.players.map((player) => {
+    const summary = playerSummary(player, state.movements);
+    const remaining = player.remainingChips === null ? '未填写' : formatNumber(player.remainingChips);
+    const profit = player.remainingChips === null ? '—' : `${summary.profitLoss >= 0 ? '+' : ''}${formatNumber(summary.profitLoss)}`;
+    const amount = player.remainingChips === null || !rate ? '' : `｜${signedMoney(summary.profitLoss, rate)}`;
+    return `${player.name}｜${formatNumber(summary.netBuyIn)}｜${remaining}｜${profit}${amount}`;
+  });
+  return ['结算情况：', `截止统计时间：${copyTime(at)}`, `玩家名称｜净带入｜剩余筹码｜盈亏筹码${rate ? '｜盈亏金额' : ''}`, ...rows].join('\n');
+}
+async function copySettlement(state) {
+  try {
+    await copyText(settlementText(state));
+    settlementCopyStatus = '已复制';
+    message = '';
+  } catch {
+    settlementCopyStatus = '';
+    message = '复制失败，请检查浏览器是否允许访问剪贴板';
+  }
+  render();
+  if (settlementCopyStatus) window.setTimeout(() => { settlementCopyStatus = ''; render(); }, 1600);
 }
 async function copyText(text) {
   if (navigator.clipboard?.writeText && window.isSecureContext) return navigator.clipboard.writeText(text);
